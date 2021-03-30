@@ -32,6 +32,8 @@ Servo forward_servo;
 #define HOME_POS 500 //TODO
 #define DRONE_POS 1000 //TODO
 #define CHARGER_POS 0 //TODO
+#define MAX_SPEED 100
+#define MAX_ACCEL 50 
 AccelStepper stepper = new AccelStepper(MOTOR_INTERFACE, DIR_PIN, STEP_PIN);
 
 //Comunnication
@@ -75,9 +77,9 @@ void MotorSetup() {
   forward_servo.write(FORWARD_MIN_POS);
 
   //Stepper
-  stepper.setMaxSpeed(100);
-  stepper.setAcceleration(500);
-  stepper.moveTo(0);
+  stepper.setMaxSpeed(MAX_SPEED);
+  stepper.setAcceleration(MAX_ACCEL);
+  stepper.moveTo(HOME_POS);
   stepper.runToPosition();
 }
 void CloseClamp() {
@@ -149,7 +151,6 @@ void Acutate() {
     MoveClamp(FORWARD_MAX_POS);
     delay(2000);
     CloseClamp();
-       
     Serial.println("Clamp is closed.")
 
     MoveClamp(FORWARD_MIN_POS);
@@ -158,6 +159,8 @@ void Acutate() {
     //may add delay here
     MoveClamp(FORWARD_MAX_POS);//may need to differentiate drone and charger positions as they may be different
     OpenClamp();
+    MoveClamp(FORWARD_MIN_POS);
+    MoveStepper(HOME_POS);
     
     
 
