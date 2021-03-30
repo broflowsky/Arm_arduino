@@ -19,7 +19,6 @@
 Servo clamp_servo;
 
 // Forward servo - 180° rotation
-
 #define FORWARD_PIN 3
 #define FORWARD_MAX_POS 180// TODO
 #define FORWARD_MIN_POS 0 //TODO
@@ -30,26 +29,38 @@ Servo forward_servo;
 #define DIR_PIN 4
 #define STEP_PIN 5
 #define MOTOR_INTERFACE 1
+#define HOME_POS 500 //TODO
+#define DRONE_POS 1000 //TODO
+#define CHARGER_POS 0 //TODO
 AccelStepper stepper = new AccelStepper(MOTOR_INTERFACE, DIR_PIN, STEP_PIN);
 
+//Comunnication
+const byte numChars = 32;
+char receivedChars[numChars];
+boolean newData = false;
+boolean swap = false;
 
 
-bool OpenClamp();
-bool CloseClamp();
+//Forward declaration
+void OpenClamp();
+void CloseClamp();
 void MotorsSetup();
+void MoveStepper(long);
+void MoveClamp(int);
+void RecvWithStartEndMarkers();//read serial
+void ProcessNewData();//decide which action to take
+void Actuate();
+
 
 void setup() {
-
   Serial.begin(9600);
   MotorSetup();
-
 }
 
 void loop() {
-
-
-
-
+  recvWithStartEndMarkers();
+  processNewData();
+  acutate();
 
 }
 void MotorSetup() {
@@ -63,25 +74,97 @@ void MotorSetup() {
   forward_servo.attach(FORWARD_PIN);
   forward_servo.write(FORWARD_MIN_POS);
 
-//Stepper
+  //Stepper
   stepper.setMaxSpeed(100);
   stepper.setAcceleration(500);
   stepper.moveTo(0);
   stepper.runToPosition();
 }
-bool CloseClamp() {
+void CloseClamp() {
 
   for (byte pos = CLAMP_OPENED_POS; pos > CLAMP_CLOSED_POS; --pos) {
     clamp_servo.write(pos);
     delay(20);
   }
-  return true;
+  
 }
-bool OpenClamp() {
+void OpenClamp() {
 
   for (byte pos = CLAMP_CLOSED_POS; pos < CLAMP_OPENED_POS; ++pos) {
     clamp_servo.write(pos);
     delay(1);
   }
-  return true;
+
+}
+void MoveStepper(long newPosition) {
+  stepper.runToNewPosition(newPosition);
+}
+void MoveClamp(int newPosition) {
+  forward_servo.write(newPosition);
+}
+void RecvWithStartEndMarkers() {
+  static boolean recvInProgress = false;
+  static byte ndx = 0;
+  char startMarker = '<';
+  char endMarker = '>';
+  char rc;
+
+  while (Serial.available() > 0 && newData == false) {
+    rc = Serial.read();
+
+    if (recvInProgress == true) {
+      if (rc != endMarker) {
+        receivedChars[ndx] = rc;
+        ndx++;
+        if (ndx >= numChars) {
+          ndx = numChars - 1;
+        }
+      }
+      else {
+        receivedChars[ndx] = '\0'; // terminate the string
+        recvInProgress = false;
+        ndx = 0;
+        newData = true;
+      }
+    }
+    else if (rc == startMarker) {
+      recvInProgress = true;
+    }
+  }
+}
+void ProcessNewData() {
+  if (newData == true) {
+    newData = false;
+    if (strcmp(receivedChars, "SWAP_START") == 0) {
+      swap = true;
+    }
+
+  }
+}
+void Acutate() {
+  if (swap) {
+    Serial.println("Swapping");
+    
+    MoveStepper(DRONE_POS);
+    MoveClamp(FORWARD_MAX_POS);
+    delay(2000);
+    CloseClamp();
+       
+    Serial.println("Clamp is closed.")
+
+    MoveClamp(FORWARD_MIN_POS);
+    //may add delay here
+    MoveStepper(CHARGER_POS);
+    //may add delay here
+    MoveClamp(FORWARD_MAX_POS);//may need to differentiate drone and charger positions as they may be different
+    OpenClamp();
+    
+    
+
+    
+  }
+  else {
+
+    myservo.writeMicroseconds(1500);
+  }
 }
