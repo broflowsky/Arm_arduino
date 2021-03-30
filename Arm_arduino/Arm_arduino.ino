@@ -33,7 +33,7 @@ Servo forward_servo;
 #define DRONE_POS 1000 //TODO
 #define CHARGER_POS 0 //TODO
 #define MAX_SPEED 100
-#define MAX_ACCEL 50 
+#define MAX_ACCEL 50
 AccelStepper stepper = new AccelStepper(MOTOR_INTERFACE, DIR_PIN, STEP_PIN);
 
 //Comunnication
@@ -60,9 +60,9 @@ void setup() {
 }
 
 void loop() {
-  recvWithStartEndMarkers();
-  processNewData();
-  acutate();
+  RecvWithStartEndMarkers();
+  ProcessNewData();
+  Actuate();
 
 }
 void MotorSetup() {
@@ -81,6 +81,8 @@ void MotorSetup() {
   stepper.setAcceleration(MAX_ACCEL);
   stepper.moveTo(HOME_POS);
   stepper.runToPosition();
+
+   Serial.println("Arm in Home configuration.");
 }
 void CloseClamp() {
 
@@ -88,7 +90,7 @@ void CloseClamp() {
     clamp_servo.write(pos);
     delay(20);
   }
-  
+
 }
 void OpenClamp() {
 
@@ -114,7 +116,7 @@ void RecvWithStartEndMarkers() {
   while (Serial.available() > 0 && newData == false) {
     rc = Serial.read();
 
-    if (recvInProgress == true) {
+    if (recvInProgress) {
       if (rc != endMarker) {
         receivedChars[ndx] = rc;
         ndx++;
@@ -143,31 +145,31 @@ void ProcessNewData() {
 
   }
 }
-void Acutate() {
+void Actuate() {
   if (swap) {
     Serial.println("Swapping");
-    
+
     MoveStepper(DRONE_POS);
     MoveClamp(FORWARD_MAX_POS);
+    //delay until robot has reached, may not be necessary
     delay(2000);
     CloseClamp();
-    Serial.println("Clamp is closed.")
+    Serial.println("Clamp is closed.");
 
+    //Take away battery from drone and move down towards charger
     MoveClamp(FORWARD_MIN_POS);
     //may add delay here
     MoveStepper(CHARGER_POS);
     //may add delay here
+    //insert battery into charger
     MoveClamp(FORWARD_MAX_POS);//may need to differentiate drone and charger positions as they may be different
+    //Let go of the battery
     OpenClamp();
+    Serial.println("Battery inserted");
+    //Return arm to home position
     MoveClamp(FORWARD_MIN_POS);
     MoveStepper(HOME_POS);
-    
-    
-
-    
+    Serial.println("Arm in Home configuration.");
   }
-  else {
-
-    myservo.writeMicroseconds(1500);
-  }
+ 
 }
