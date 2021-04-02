@@ -2,9 +2,15 @@
 //2 DOF Swap Dock
 
 /*
-  Stepper tutorial and library
-  https://www.makerguides.com/tb6600-stepper-motor-driver-arduino-tutorial/
-  https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html#a608b2395b64ac15451d16d0371fe13ce
+  Stepper
+    tutorial
+    https://www.makerguides.com/tb6600-stepper-motor-driver-arduino-tutorial/
+
+    Library
+    https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html#a608b2395b64ac15451d16d0371fe13ce
+
+    Protothreading
+    https://create.arduino.cc/projecthub/reanimationxp/how-to-multithread-an-arduino-protothreading-tutorial-dd2c37
 
 */
 
@@ -32,7 +38,7 @@ Servo forward_servo;
 #define HOME_POS 500 //TODO
 #define DRONE_POS 1000 //TODO
 #define CHARGER_POS 0 //TODO
-#define MAX_SPEED 100
+#define MAX_SPEED 500 // up to 4000 steps per second on 16 Mhz Atmega328
 #define MAX_ACCEL 50
 AccelStepper stepper = new AccelStepper(MOTOR_INTERFACE, DIR_PIN, STEP_PIN);
 
@@ -82,7 +88,7 @@ void MotorSetup() {
   stepper.moveTo(HOME_POS);
   stepper.runToPosition();
 
-   Serial.println("Arm in Home configuration.");
+  Serial.println("Arm in Home configuration.");
 }
 void CloseClamp() {
 
@@ -171,5 +177,5 @@ void Actuate() {
     MoveStepper(HOME_POS);
     Serial.println("Arm in Home configuration.");
   }
- 
+
 }
