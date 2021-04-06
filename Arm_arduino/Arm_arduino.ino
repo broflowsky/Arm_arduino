@@ -20,13 +20,13 @@
 
 //  Clamp servo - 180° roation
 #define CLAMP_PIN 2
-#define CLAMP_OPENED_POS 100
-#define CLAMP_CLOSED_POS 87
+#define CLAMP_OPENED_POS 90
+#define CLAMP_CLOSED_POS 75
 Servo clamp_servo;
 
 // Forward servo - 180° rotation
 #define FORWARD_PIN 3
-#define FORWARD_MAX_POS 180// TODO
+#define FORWARD_MAX_POS 90// TODO
 #define FORWARD_MIN_POS 0 //TODO
 Servo forward_servo;
 
@@ -38,10 +38,11 @@ Servo forward_servo;
 #define STEPPER_MOTOR_INTERFACE 1
 
 #define STEPPER_HOME_POS 0
-#define STEPPER_DRONE_POS 2000
-#define STEPPER_CHARGER_POS -2000
-#define STEPPER_MAX_SPEED 3000 // up to 4000 steps per second on 16 Mhz Atmega328
-#define STEPPER_MAX_ACCEL 350
+#define STEPPER_DRONE_POS 2500
+#define STEPPER_CHARGER_POS -2500
+#define STEPPER_CHARGER_POS2 -5000
+#define STEPPER_MAX_SPEED 4500
+#define STEPPER_MAX_ACCEL 1000
 AccelStepper stepper = AccelStepper(STEPPER_MOTOR_INTERFACE, STEPPER_STEP_PIN, STEPPER_DIR_PIN);
 
 //Comunnication
@@ -52,7 +53,7 @@ boolean swap = false;
 
 //LED indication Task Scheduler
 #define NUM_PIN 4
-byte ledPins[] = {10,11,12,9};
+byte ledPins[] = {10, 11, 12, 9};
 
 #define LED_HOME_POSITION 0
 #define LED_DRONE_APPROACH 1
@@ -62,6 +63,13 @@ byte ledPins[] = {10,11,12,9};
 #define LED_CHARGER_APPROACH 5
 #define LED_BATTERY_INSERT 6
 #define LED_CLAW_RELEASE 7
+#define LED_CHARGER_APPROACH 8
+#define LED_BATTERY_REACH2 9
+#define LED_CLAW_TRIGGER2 10
+#define LED_BATTERY_RETRACT2 11
+#define LED_DRONE_APPROACH2 12
+#define LED_BATTERY_INSERT2 13
+#define LED_CLAW_RELEASE2 14
 #define LED_HOME_APPROACH 15
 
 
@@ -80,28 +88,28 @@ void TaskSchedulerLED(byte); //display LED
 
 void setup() {
   Serial.begin(9600);
-  pinMode(9,OUTPUT);
+  pinMode(9, OUTPUT);
   pinMode(10, OUTPUT);
   pinMode(11, OUTPUT);
   pinMode(12, OUTPUT);
-  
+
   MotorSetup();
 }
 
 void loop() {
-  //  RecvWithStartEndMarkers();
-  //  ProcessNewData();
-  swap = true;
+  RecvWithStartEndMarkers();
+  ProcessNewData();
+  //swap = true;
   Actuate();
-  delay(1000);
-  
+  //delay(1000);
+
   //stepper.runToNewPosition(1000);
 
 }
-void TaskSchedulerLED(byte task){
-  
-    for(byte i = 0; i<NUM_PIN ;++i)
-      digitalWrite(ledPins[i],bitRead(task,i));
+void TaskSchedulerLED(byte task) {
+
+  for (byte i = 0; i < NUM_PIN ; ++i)
+    digitalWrite(ledPins[i], bitRead(task, i));
 }
 
 void MotorSetup() {
@@ -121,7 +129,7 @@ void MotorSetup() {
   stepper.moveTo(STEPPER_HOME_POS);
   stepper.runToPosition();
 
-//Set LED indicators
+  //Set LED indicators
   TaskSchedulerLED(LED_HOME_POSITION);
 
 }
@@ -189,14 +197,17 @@ void ProcessNewData() {
 void Actuate() {
   if (swap) {
 
+    Serial.println("Starting swapping procedure");
+    //Reach drone
     TaskSchedulerLED(LED_DRONE_APPROACH);
     MoveStepper(STEPPER_DRONE_POS);
     delay(1000);
 
+    //Grab Battery
     TaskSchedulerLED(LED_BATTERY_REACH);
     MoveClamp(FORWARD_MAX_POS);
     delay(1000);
-  
+
     TaskSchedulerLED(LED_CLAW_TRIGGER);
     CloseClamp();
     delay(1000);
@@ -205,25 +216,63 @@ void Actuate() {
     MoveClamp(FORWARD_MIN_POS);
     delay(1000);
 
+    //Reach Empty charger
     TaskSchedulerLED( LED_CHARGER_APPROACH);
     MoveStepper(STEPPER_CHARGER_POS);
     delay(1000);
-    
+
+    //Place battery
     TaskSchedulerLED(LED_BATTERY_INSERT);
     MoveClamp(FORWARD_MAX_POS);
     delay(1000);
-    
-    //Let go of the battery
+
     TaskSchedulerLED(LED_CLAW_RELEASE);
     OpenClamp();
-  
-    //Return arm to home position
+    delay(1000);
+
     TaskSchedulerLED(LED_HOME_APPROACH);
     MoveClamp(FORWARD_MIN_POS);
+    delay(1000);
+
+    //Reach Empty charger
+    MoveStepper(STEPPER_CHARGER_POS2);
+    delay(1000);
+
+    //Grab Battery
+    TaskSchedulerLED(LED_BATTERY_REACH2);
+    MoveClamp(FORWARD_MAX_POS);
+    delay(1000);
+
+    TaskSchedulerLED(LED_CLAW_TRIGGER2);
+    CloseClamp();
+    delay(1000);
+
+    TaskSchedulerLED(LED_BATTERY_RETRACT2);
+    MoveClamp(FORWARD_MIN_POS);
+    delay(1000);
+
+    //Go to drone
+    MoveStepper(STEPPER_DRONE_POS);
+    delay(1000);
+
+    //Insert battery
+    TaskSchedulerLED(LED_BATTERY_INSERT);
+    MoveClamp(FORWARD_MAX_POS);
+    delay(1000);
+
+    TaskSchedulerLED(LED_CLAW_RELEASE);
+    OpenClamp();
+    delay(1000);
+
+    TaskSchedulerLED(LED_HOME_APPROACH);
+    MoveClamp(FORWARD_MIN_POS);
+    delay(1000);
+    //Go home
     MoveStepper(STEPPER_HOME_POS);
     delay(1000);
     TaskSchedulerLED(LED_HOME_POSITION);
     swap = !swap;
+    Serial.println("SWAPDONE");
   }
 
 }
