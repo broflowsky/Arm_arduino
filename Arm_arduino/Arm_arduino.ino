@@ -62,7 +62,7 @@ byte ledPins[] = {10,11,12,9};
 #define LED_CHARGER_APPROACH 5
 #define LED_BATTERY_INSERT 6
 #define LED_CLAW_RELEASE 7
-#define LED_HOME_APPROACH 8
+#define LED_HOME_APPROACH 15
 
 
 //Forward declaration
@@ -99,7 +99,7 @@ void loop() {
 
 }
 void TaskSchedulerLED(byte task){
-  if(task <= 8)
+  
     for(byte i = 0; i<NUM_PIN ;++i)
       digitalWrite(ledPins[i],bitRead(task,i));
 }
