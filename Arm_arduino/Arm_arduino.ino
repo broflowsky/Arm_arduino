@@ -35,12 +35,13 @@ Servo forward_servo;
 #define DIR_PIN 4
 #define STEP_PIN 5
 #define MOTOR_INTERFACE 1
-#define HOME_POS 500 //TODO
+#define ZERO_POS 0
+#define HOME_POS 2000 //TODO
 #define DRONE_POS 1000 //TODO
 #define CHARGER_POS 0 //TODO
-#define MAX_SPEED 500 // up to 4000 steps per second on 16 Mhz Atmega328
-#define MAX_ACCEL 50
-AccelStepper stepper = new AccelStepper(MOTOR_INTERFACE, DIR_PIN, STEP_PIN);
+#define MAX_SPEED 3000 // up to 4000 steps per second on 16 Mhz Atmega328
+#define MAX_ACCEL 500
+AccelStepper stepper = AccelStepper(MOTOR_INTERFACE, STEP_PIN, DIR_PIN);
 
 //Comunnication
 const byte numChars = 32;
@@ -59,16 +60,20 @@ void RecvWithStartEndMarkers();//read serial
 void ProcessNewData();//decide which action to take
 void Actuate();
 
-
+bool isDone = false;
 void setup() {
   Serial.begin(9600);
   MotorSetup();
 }
 
 void loop() {
-  RecvWithStartEndMarkers();
-  ProcessNewData();
-  Actuate();
+  //  RecvWithStartEndMarkers();
+  //  ProcessNewData();
+  //  Actuate();
+
+  stepper.runToNewPosition(-10000);
+
+  
 
 }
 void MotorSetup() {
@@ -85,7 +90,7 @@ void MotorSetup() {
   //Stepper
   stepper.setMaxSpeed(MAX_SPEED);
   stepper.setAcceleration(MAX_ACCEL);
-  stepper.moveTo(HOME_POS);
+  stepper.moveTo(ZERO_POS);
   stepper.runToPosition();
 
   Serial.println("Arm in Home configuration.");
