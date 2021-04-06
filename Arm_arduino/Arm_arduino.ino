@@ -32,15 +32,16 @@ Servo forward_servo;
 
 
 //  UP Down Stepper motor
+// positive positions are above home position, hence positives pos > current pos moves up
 #define DIR_PIN 4
 #define STEP_PIN 5
 #define MOTOR_INTERFACE 1
-#define ZERO_POS 0
-#define HOME_POS 2000 //TODO
-#define DRONE_POS 1000 //TODO
-#define CHARGER_POS 0 //TODO
-#define MAX_SPEED 3000 // up to 4000 steps per second on 16 Mhz Atmega328
-#define MAX_ACCEL 500
+
+#define HOME_POS 0
+#define DRONE_POS 2000 //TODO
+#define CHARGER_POS -2000 //TODO
+#define MAX_SPEED 5000 // up to 4000 steps per second on 16 Mhz Atmega328
+#define MAX_ACCEL 400
 AccelStepper stepper = AccelStepper(MOTOR_INTERFACE, STEP_PIN, DIR_PIN);
 
 //Comunnication
@@ -69,9 +70,11 @@ void setup() {
 void loop() {
   //  RecvWithStartEndMarkers();
   //  ProcessNewData();
-  //  Actuate();
-
-  stepper.runToNewPosition(-10000);
+  swap = true;
+  
+     Actuate();
+delay(1000);
+  //stepper.runToNewPosition(1000);
 
   
 
@@ -90,7 +93,7 @@ void MotorSetup() {
   //Stepper
   stepper.setMaxSpeed(MAX_SPEED);
   stepper.setAcceleration(MAX_ACCEL);
-  stepper.moveTo(ZERO_POS);
+  stepper.moveTo(HOME_POS);
   stepper.runToPosition();
 
   Serial.println("Arm in Home configuration.");
@@ -163,24 +166,28 @@ void Actuate() {
     MoveStepper(DRONE_POS);
     MoveClamp(FORWARD_MAX_POS);
     //delay until robot has reached, may not be necessary
-    delay(2000);
+    delay(1000);
     CloseClamp();
+    delay(1000);
     Serial.println("Clamp is closed.");
 
     //Take away battery from drone and move down towards charger
     MoveClamp(FORWARD_MIN_POS);
-    //may add delay here
+    delay(1000);//may add delay here
     MoveStepper(CHARGER_POS);
-    //may add delay here
+    delay(1000);//may add delay here
     //insert battery into charger
     MoveClamp(FORWARD_MAX_POS);//may need to differentiate drone and charger positions as they may be different
+    delay(1000);
     //Let go of the battery
     OpenClamp();
     Serial.println("Battery inserted");
     //Return arm to home position
     MoveClamp(FORWARD_MIN_POS);
     MoveStepper(HOME_POS);
+    delay(1000);
     Serial.println("Arm in Home configuration.");
+    swap = !swap;
   }
 
 }
