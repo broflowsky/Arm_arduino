@@ -192,6 +192,9 @@ void ProcessNewData() {
       swap = true;
     }
 
+  if (strcmp(receivedChars, "IDENTIFY_PORT") == 0) {
+       Serial.println("<ARM>");
+    }
   }
 }
 void Actuate() {
@@ -272,7 +275,7 @@ void Actuate() {
     delay(1000);
     TaskSchedulerLED(LED_HOME_POSITION);
     swap = !swap;
-    Serial.println("SWAPDONE");
+    Serial.println("<SWAPDONE>");
   }
 
 }
