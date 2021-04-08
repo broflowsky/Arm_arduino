@@ -32,7 +32,7 @@ boolean swap = false;
 
 //LED indication Task Scheduler
 
-byte ledPins[] = {LED_BIT_0,LED_BIT_1,LED_BIT_2,LED_BIT_3};
+byte ledPins[] = {LED_BIT_0, LED_BIT_1, LED_BIT_2, LED_BIT_3};
 
 
 
@@ -121,7 +121,7 @@ void Actuate() {
     MoveClamp(FORWARD_MIN_POS);
     delay(1000);
 
- 
+
     TaskSchedulerLED(LED_DRONE_APPROACH2 );
     MoveStepper(STEPPER_DRONE_POS);
     delay(1000);
@@ -141,6 +141,8 @@ void Actuate() {
     //Go home
     MoveStepper(STEPPER_HOME_POS);
     delay(1000);
+
+
     TaskSchedulerLED(LED_HOME_POSITION);
     swap = !swap;
     Serial.println("<SWAPDONE>");
@@ -166,6 +168,28 @@ void MotorSetup() {
 }
 void TaskSchedulerLED(byte task) {
 
+  if (!task) {
+    byte count = 10;
+    while (count-- > 0) {
+      for (byte i = 0; i < 4 ; ++i) {
+        digitalWrite(ledPins[i], bitRead(1, i));
+        delay(10);
+      }
+      for (byte i = 0; i < 4 ; ++i) {
+        digitalWrite(ledPins[i], bitRead(2, i));
+        delay(10);
+      }
+      for (byte i = 0; i < 4 ; ++i) {
+        digitalWrite(ledPins[i], bitRead(4, i));
+        delay(10);
+      }
+      for (byte i = 0; i < 4 ; ++i) {
+        digitalWrite(ledPins[i], bitRead(8, i));
+        delay(10);
+      }
+
+    }
+  }
   for (byte i = 0; i < NUM_PIN ; ++i)
     digitalWrite(ledPins[i], bitRead(task, i));
 }
@@ -230,8 +254,8 @@ void ProcessNewData() {
       swap = true;
     }
 
-  if (strcmp(receivedChars, "IDENTIFY_PORT") == 0) {
-       Serial.println("<ARM>");
+    if (strcmp(receivedChars, "IDENTIFY_PORT") == 0) {
+      Serial.println("<ARM>");
     }
   }
 }
