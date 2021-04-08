@@ -7,7 +7,7 @@ SwapDock Constants
 //  Clamp servo - 180° roation
 #define CLAMP_PIN 2
 #define CLAMP_OPENED_POS 90
-#define CLAMP_CLOSED_POS 75
+#define CLAMP_CLOSED_POS 74
 
 // Forward servo - 180° rotation
 #define FORWARD_PIN 3
@@ -60,4 +60,3 @@ void LedSetup(){
 
 
 }
-
