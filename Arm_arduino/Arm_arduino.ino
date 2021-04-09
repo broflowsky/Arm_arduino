@@ -21,8 +21,8 @@
 //Motors
 Servo clamp_servo;
 Servo forward_servo;
-AccelStepper stepper = AccelStepper(STEPPER_MOTOR_INTERFACE, STEPPER_STEP_PIN, STEPPER_DIR_PIN);
-
+AccelStepper vertical_stepper = AccelStepper(VERTICAL_STEPPER_MOTOR_INTERFACE, VERTICAL_STEPPER_STEP_PIN, VERTICAL_STEPPER_DIR_PIN);
+AccelStepper horizontal_stepper = AccelStepper(HORIZONTAL_STEPPER_MOTOR_INTERFACE, HORIZONTAL_STEPPER_STEP_PIN, HORIZONTAL_STEPPER_DIR_PIN);
 
 //Comunnication
 const byte numChars = 32;
@@ -41,7 +41,7 @@ void OpenClamp();
 void CloseClamp();
 void MotorsSetup();
 void LedSetup();
-void MoveStepper(long);
+void MoveVerticalStepper(long);
 void MoveClamp(int);
 void RecvWithStartEndMarkers();//read serial
 void ProcessNewData();//decide which action to take
@@ -62,7 +62,7 @@ void loop() {
   Actuate();
   delay(1000);
 
-  //stepper.runToNewPosition(1000);
+  //vertical_stepper.runToNewPosition(1000);
 }
 void Actuate() {
   if (swap) {
@@ -70,7 +70,7 @@ void Actuate() {
     Serial.println("Starting swapping procedure");
     //Reach drone
     TaskSchedulerLED(LED_DRONE_APPROACH);
-    MoveStepper(STEPPER_DRONE_POS);
+    MoveVerticalStepper(VERTICAL_STEPPER_DRONE_POS);
     delay(1000);
 
     //Grab Battery
@@ -88,7 +88,7 @@ void Actuate() {
 
     //Reach Empty charger
     TaskSchedulerLED( LED_CHARGER_APPROACH);
-    MoveStepper(STEPPER_CHARGER_POS);
+    MoveVerticalStepper(VERTICAL_STEPPER_CHARGER_POS);
     delay(1000);
 
     //Place battery
@@ -105,7 +105,7 @@ void Actuate() {
     delay(1000);
 
     //Reach Empty charger
-    MoveStepper(STEPPER_CHARGER_POS2);
+    MoveVerticalStepper(VERTICAL_STEPPER_CHARGER_POS2);
     delay(1000);
 
     //Grab Battery
@@ -123,7 +123,7 @@ void Actuate() {
 
 
     TaskSchedulerLED(LED_DRONE_APPROACH2 );
-    MoveStepper(STEPPER_DRONE_POS);
+    MoveVerticalStepper(VERTICAL_STEPPER_DRONE_POS);
     delay(1000);
 
     //Insert battery
@@ -139,7 +139,7 @@ void Actuate() {
     MoveClamp(FORWARD_MIN_POS);
     delay(1000);
     //Go home
-    MoveStepper(STEPPER_HOME_POS);
+    MoveVerticalStepper(VERTICAL_STEPPER_HOME_POS);
     delay(1000);
 
 
@@ -158,11 +158,16 @@ void MotorSetup() {
   forward_servo.write(FORWARD_MIN_POS);
 
   //Stepper
-  stepper.setMaxSpeed(STEPPER_MAX_SPEED);
-  stepper.setAcceleration(STEPPER_MAX_ACCEL);
-  stepper.moveTo(STEPPER_HOME_POS);
-  stepper.runToPosition();
-
+  vertical_stepper.setMaxSpeed(VERTICAL_STEPPER_MAX_SPEED);
+  vertical_stepper.setAcceleration(VERTICAL_STEPPER_MAX_ACCEL);
+  vertical_stepper.moveTo(VERTICAL_STEPPER_HOME_POS);
+  vertical_stepper.runToPosition();
+  
+  horizontal_stepper.setMaxSpeed(HORIZONTAL_STEPPER_MAX_SPEED);
+  horizontal_stepper.setAcceleration(HORIZONTAL_STEPPER_MAX_ACCEL);
+  horizontal_stepper.moveTo(HORIZONTAL_STEPPER_HOME_POS);
+  horizontal_stepper.runToPosition();
+  
   //Set LED indicators
   TaskSchedulerLED(LED_HOME_POSITION);
 }
@@ -211,8 +216,11 @@ void OpenClamp() {
   }
 }
 
-void MoveStepper(long newPosition) {
-  stepper.runToNewPosition(newPosition);
+void MoveVerticalStepper(long newPosition) {
+  vertical_stepper.runToNewPosition(newPosition);
+}
+void MoveHorizontalStepper(long newPosition){
+  horizontal_stepper.runToNewPosition(newPosition);
 }
 void MoveClamp(int newPosition) {
   forward_servo.write(newPosition);
