@@ -61,18 +61,19 @@ void setup() {
 
   //
   //
-  MoveHorizontalStepper(-HORIZONTAL_STEPPER_MAX_POS);
-    MoveVerticalStepper(-VERTICAL_STEPPER_DRONE_POS);
+ // MoveHorizontalStepper(HORIZONTAL_STEPPER_MAX_POS);
+  //  MoveVerticalStepper(VERTICAL_STEPPER_DRONE_POS);
+  // MoveHorizontalStepper(HORIZONTAL_STEPPER_MAX_POS);/
   //    delay(2000);
   
 
 }
 void loop() {
-//    RecvWithStartEndMarkers();
-//    ProcessNewData();
-//   // swap = true;
-//    Actuate();
-//  //  delay(3000);
+    RecvWithStartEndMarkers();
+    ProcessNewData();
+   // swap = true;
+    Actuate();
+//  delay(3000);
 
 //  MoveVerticalStepper(VERTICAL_STEPPER_DRONE_POS);
 //  delay(2000);
@@ -122,8 +123,12 @@ void Actuate() {
 
     //Reach Empty charger
     TaskSchedulerLED( LED_CHARGER_APPROACH);
+    MoveVerticalStepper(VERTICAL_STEPPER_CHARGER_POS/2);
+   // delay(1000);
     MoveVerticalStepper(VERTICAL_STEPPER_CHARGER_POS);
     delay(1000);
+
+    
 
     MoveHorizontalStepper(HORIZONTAL_STEPPER_MAX_POS);
     delay(1000);
