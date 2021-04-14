@@ -54,23 +54,49 @@ void setup() {
   Serial.begin(9600);
   LedSetup();
   MotorSetup();
+
+  //   horizontal_stepper.runToNewPosition(-3000);
+  //MoveClamp(FORWARD_MAX_POS);
+
+
+  //
+  //
+  MoveHorizontalStepper(-HORIZONTAL_STEPPER_MAX_POS);
+    MoveVerticalStepper(-VERTICAL_STEPPER_DRONE_POS);
+  //    delay(2000);
+  
+
 }
 void loop() {
-  RecvWithStartEndMarkers();
-  ProcessNewData();
-  swap = true;
-  Actuate();
-  delay(1000);
+//    RecvWithStartEndMarkers();
+//    ProcessNewData();
+//   // swap = true;
+//    Actuate();
+//  //  delay(3000);
 
-  //vertical_stepper.runToNewPosition(1000);
+//  MoveVerticalStepper(VERTICAL_STEPPER_DRONE_POS);
+//  delay(2000);
+//
+//  MoveVerticalStepper(VERTICAL_STEPPER_BATTERY_UP_POS);
+//  delay(2000);
+//  
+// MoveVerticalStepper(VERTICAL_STEPPER_HOME_POS);
+// delay(2000);
+
 }
 void Actuate() {
   if (swap) {
 
     Serial.println("Starting swapping procedure");
+
+    TaskSchedulerLED(LED_HOME_POSITION);
+
     //Reach drone
     TaskSchedulerLED(LED_DRONE_APPROACH);
     MoveVerticalStepper(VERTICAL_STEPPER_DRONE_POS);
+    delay(1000);
+
+    MoveHorizontalStepper(HORIZONTAL_STEPPER_MAX_POS);
     delay(1000);
 
     //Grab Battery
@@ -82,18 +108,33 @@ void Actuate() {
     CloseClamp();
     delay(1000);
 
+    MoveVerticalStepper(VERTICAL_STEPPER_BATTERY_UP_POS);
+    delay(1000);
+
+
     TaskSchedulerLED(LED_BATTERY_RETRACT);
     MoveClamp(FORWARD_MIN_POS);
     delay(1000);
+
+    MoveHorizontalStepper(HORIZONTAL_STEPPER_HOME_POS);
+    delay(1000);
+
 
     //Reach Empty charger
     TaskSchedulerLED( LED_CHARGER_APPROACH);
     MoveVerticalStepper(VERTICAL_STEPPER_CHARGER_POS);
     delay(1000);
 
+    MoveHorizontalStepper(HORIZONTAL_STEPPER_MAX_POS);
+    delay(1000);
+
     //Place battery
     TaskSchedulerLED(LED_BATTERY_INSERT);
     MoveClamp(FORWARD_MAX_POS);
+    delay(1000);
+
+    //inswert battery
+    MoveVerticalStepper(VERTICAL_STEPPER_CHARGER_POS2);
     delay(1000);
 
     TaskSchedulerLED(LED_CLAW_RELEASE);
@@ -104,41 +145,10 @@ void Actuate() {
     MoveClamp(FORWARD_MIN_POS);
     delay(1000);
 
-    //Reach Empty charger
-    MoveVerticalStepper(VERTICAL_STEPPER_CHARGER_POS2);
+
+    MoveHorizontalStepper(HORIZONTAL_STEPPER_HOME_POS);
     delay(1000);
 
-    //Grab Battery
-    TaskSchedulerLED(LED_BATTERY_REACH2);
-    MoveClamp(FORWARD_MAX_POS);
-    delay(1000);
-
-    TaskSchedulerLED(LED_CLAW_TRIGGER2);
-    CloseClamp();
-    delay(1000);
-
-    TaskSchedulerLED(LED_BATTERY_RETRACT2);
-    MoveClamp(FORWARD_MIN_POS);
-    delay(1000);
-
-
-    TaskSchedulerLED(LED_DRONE_APPROACH2 );
-    MoveVerticalStepper(VERTICAL_STEPPER_DRONE_POS);
-    delay(1000);
-
-    //Insert battery
-    TaskSchedulerLED(LED_BATTERY_INSERT2);
-    MoveClamp(FORWARD_MAX_POS);
-    delay(1000);
-
-    TaskSchedulerLED(LED_CLAW_RELEASE2);
-    OpenClamp();
-    delay(1000);
-
-    TaskSchedulerLED(LED_HOME_APPROACH);
-    MoveClamp(FORWARD_MIN_POS);
-    delay(1000);
-    //Go home
     MoveVerticalStepper(VERTICAL_STEPPER_HOME_POS);
     delay(1000);
 
@@ -162,12 +172,12 @@ void MotorSetup() {
   vertical_stepper.setAcceleration(VERTICAL_STEPPER_MAX_ACCEL);
   vertical_stepper.moveTo(VERTICAL_STEPPER_HOME_POS);
   vertical_stepper.runToPosition();
-  
+
   horizontal_stepper.setMaxSpeed(HORIZONTAL_STEPPER_MAX_SPEED);
   horizontal_stepper.setAcceleration(HORIZONTAL_STEPPER_MAX_ACCEL);
   horizontal_stepper.moveTo(HORIZONTAL_STEPPER_HOME_POS);
   horizontal_stepper.runToPosition();
-  
+
   //Set LED indicators
   TaskSchedulerLED(LED_HOME_POSITION);
 }
@@ -219,11 +229,23 @@ void OpenClamp() {
 void MoveVerticalStepper(long newPosition) {
   vertical_stepper.runToNewPosition(newPosition);
 }
-void MoveHorizontalStepper(long newPosition){
+void MoveHorizontalStepper(long newPosition) {
   horizontal_stepper.runToNewPosition(newPosition);
 }
 void MoveClamp(int newPosition) {
-  forward_servo.write(newPosition);
+  if (newPosition > forward_servo.read()) {
+    for (int i = forward_servo.read(); i < newPosition; ++i) {
+      forward_servo.write(i);
+      delay(20);
+    }
+  }
+  else {
+    for (int i = forward_servo.read(); i > newPosition; --i) {
+      forward_servo.write(i);
+      delay(20);
+    }
+  }
+
 }
 void RecvWithStartEndMarkers() {
   static boolean recvInProgress = false;
